@@ -1,0 +1,31 @@
+{
+    "questions": [
+      {
+        "_id": "ObjectId",
+        "question_text": "What is 2 + 2?",
+        "options": ["2", "3", "4", "5"],
+        "correct_answer": "4",
+        "category": "Aptitude",
+        "difficulty": "Easy"
+      }
+    ],
+    "users": [
+      {
+        "_id": "ObjectId",
+        "username": "test_user",
+        "email": "test@example.com",
+        "responses": [
+          {"question_id": "ObjectId", "selected_option": "4", "is_correct": true}
+        ]
+      }
+    ],
+    "test_results": [
+      {
+        "_id": "ObjectId",
+        "user_id": "ObjectId",
+        "score": 90,
+        "timestamp": "2025-02-19T12:00:00"
+      }
+    ]
+  }
+  
