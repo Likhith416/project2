@@ -1,7 +1,7 @@
 tornado
 pymongo
 dnspython
-bycrypt
+bcrypt
 pydantic
 fastapi
 uvicorn
