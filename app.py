@@ -229,48 +229,7 @@ class RegisterUserHandler(tornado.web.RequestHandler):
 
 
 
-# ✅ Route to Serve `upload_preferred_cv.html`
-class UploadPreferredCVPageHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("upload_preferred_cv.html")  # Make sure this file is inside 'templates/'
-    async def post(self):
-        self.write({"success": False, "error": "Use POST to upload a CV."})  # Prevents 405 errors
-class ResultsPageHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("result.html")  # Ensure results.html is in your templates folder
 
- 
-# ✅ API Route to Handle CV Uploads
-class UploadCVHandler(BaseHandler):
-    async def post(self):
-        try:
-            if "file" not in self.request.files:
-                self.write({"success": False, "error": "No CV file uploaded"})
-                return
-
-            cv_file = self.request.files["file"][0]
-            filename = secure_filename(cv_file["filename"])
-
-            if not filename or not filename.lower().endswith((".pdf", ".docx")):
-                self.write({"success": False, "error": "Invalid file format. Only PDF/DOCX allowed."})
-                return
-
-            # ✅ Fix: Use correct encoding for HTTPX file upload
-            files = {
-                "file": (filename, cv_file["body"], "application/octet-stream")
-            }
-
-            data = {
-                "model": self.get_body_argument("model",default= "logistic_regression")
-            }
-
-            async with httpx.AsyncClient() as client:
-                response = await client.post("http://localhost:5000/upload-preferred-cv", files=files, data=data)
-
-            self.write(response.json())
-
-        except Exception as e:
-            self.write({"success": False, "error": str(e)})
 
 class EditProfileHandler(BaseHandler):
     def get(self):
@@ -377,75 +336,6 @@ class FetchSortListedHandler(BaseHandler):
 import json
 from bson import ObjectId
 
-class AddJobDetailsHandler(BaseHandler):
-    async def post(self):
-        try:
-            data = json.loads(self.request.body)
-            job_id = data.get("job_id")
-            designation = data.get("designation")
-            salary = data.get("salary")
-            place = data.get("place")
-
-            if not job_id:
-                self.write({"success": False, "error": "Job ID is required"})
-                return
-
-            # Check if job_id already exists in the database
-            existing_job = await db["job_details"].find_one({"job_id": job_id})
-            if existing_job:
-                self.write({"success": False, "error": "Job ID already exists"})
-                return
-
-            # Store job details in MongoDB if job_id is not found
-            job_details = {
-                "job_id": job_id,
-                "designation": designation,
-                "salary": salary,
-                "place": place
-            }
-            result = await db["job_details"].insert_one(job_details)
-
-            self.write({"success": bool(result.inserted_id)})
-
-        except Exception as e:
-            self.write({"success": False, "error": str(e)})
-class JobRequirementsHandler(BaseHandler):
-    async def post(self):
-        try:
-            data = json.loads(self.request.body)
-            print(data)
-            job_id = data.get("job_id")
-            experience = data.get("experience")
-            qualification = data.get("qualification")
-            keyskills = data.get("keyskills")
-
-            if keyskills:
-                keyskills = keyskills.lower()
-
-            if not job_id:
-                self.write({"success": False, "error": "Job ID is required"})
-                return
-
-            # Check if job_id already exists in the database
-            existing_job = await db["job_Requirement_details"].find_one({"job_id": job_id})
-            if existing_job:
-                self.write({"success": False, "error": "Job ID already exists"})
-                return
-
-            # Store job details in MongoDB if job_id is not found
-            job_details = {
-                "job_id": job_id,
-                "experience": experience,
-                "qualification": qualification,
-                "keyskills": keyskills
-            }
-            result = await db["job_Requiremtent_details"].insert_one(job_details)
-
-            self.write({"success": bool(result.inserted_id)})
-
-        except Exception as e:
-            self.write({"success": False, "error": str(e)})
-
 
 # Add the new route to the application
 class AddQuestionHandler(BaseHandler):
@@ -540,50 +430,8 @@ class SaveScoreHandler(BaseHandler):
 
 
 
-class jobDetailsHandler(BaseHandler):
-    async def get(self):
-        try:
-            job_details = await db["job_details"].find().to_list(length=100)
-            self.write({"success": True, "data": job_details})
-        except Exception as e:
-            self.write({"success": False, "error": str(e)})
-            self.write({"success": False, "error": str(e)})
 import io
 from bson import ObjectId
-class DownloadCVHandler(BaseHandler):
-    async def get(self):
-        try:
-            cv_id = self.get_argument("cv_id", None)
-            if not cv_id:
-                self.write({"success": False, "error": "CV ID is required."})
-            # Ensure user is authenticated
-            if not self.get_cookie("admin"):  # Ensure admin is logged in
-                self.set_status(403)
-                self.write({"success": False, "error": "Unauthorized access"})
-                return
-
-            # Validate ObjectId
-            try:
-                cv_id_obj = ObjectId(cv_id)
-            except:
-                self.set_status(400)
-                self.write({"success": False, "error": "Invalid CV ID"})
-                return
-
-            # Retrieve CV from GridFS
-            grid_out = await fs.open_download_stream(cv_id_obj)
-            file_data = await grid_out.read()
-            filename = grid_out.filename if grid_out.filename else "cv.pdf"
-
-            self.set_header("Content-Type", "application/pdf")
-            self.set_header("Content-Disposition", f"attachment; filename={filename}")
-            self.write(file_data)
-
-        except Exception as e:
-            print(f"Error in DownloadCVHandler: {e}")  # Log for debugging
-            self.set_status(404)
-            self.write({"success": False, "error": "CV not found"})
-
 
 
 
@@ -611,9 +459,6 @@ class DeleteQuestionHandler(BaseHandler):
             self.write({"success": False, "error": str(e)})
             print(f"Error during delete operation: {str(e)}")  # Log the error
 
-class PreferredcvHandler(BaseHandler):
-    def get(self):
-        self.render("preferredcv.html") 
 
 import traceback
 import tornado.web
@@ -629,82 +474,6 @@ users_collection = db["users"]
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 fs = AsyncIOMotorGridFSBucket(db)
 
-class PreferredCVDataHandler(tornado.web.RequestHandler):
-    async def get(self):
-        try:
-            job_id = self.get_argument("job_id", None)  # Fetch job_id from query params
-            if not job_id:
-                self.write(json.dumps({"success": False, "error": "Job ID is required"}))
-                return
-
-            print(f"✅ Received request for preferred CVs for Job ID: {job_id}")
-
-            db1 = client['resumedb']
-            job_collection = db['job_Requiremtent_details']
-            candidate_collection = db1['skills']
-            fs_files_collection = db['fs.files']
-
-            # Fetch job requirements for the specific job_id
-            job_reqs = await job_collection.find_one({"job_id": job_id})
-            if not job_reqs:
-                print("❌ No job requirements found for this Job ID")
-                self.write(json.dumps({"success": False, "error": "No job requirements found for given Job ID"}))
-                return
-
-            required_skills = set(map(str.strip, (job_reqs.get("keyskills") or "").split(',')))
-            print(f"🔎 Required Skills for Job {job_id}: {required_skills}")
-            
-            matched_candidates = []
-            min_match_count = 1  # ✅ Allow at least one skill match
-            
-            candidates = await candidate_collection.find({}).to_list(None)
-            print(f"🔎 Found {len(candidates)} candidates in the database")
-            
-            for candidate in candidates:
-                raw_skills = candidate.get("skills", [])
-                
-                if isinstance(raw_skills, str):
-                    candidate_skills = set(map(str.strip, raw_skills.split(",")))
-                elif isinstance(raw_skills, list):
-                    candidate_skills = set(raw_skills)
-                else:
-                    candidate_skills = set()
-                
-                matching_skills = required_skills.intersection(candidate_skills)
-                print(f"📝 Candidate {candidate.get('filename', 'Unknown')} Skills: {candidate_skills} | Matched: {matching_skills}")
-                
-                if len(matching_skills) >= min_match_count:
-                    filename = candidate.get("filename", "").strip()
-                    print(f"🔎 Searching for CV in GridFS: '{filename}'")
-                    if filename:
-                        file_doc = await fs_files_collection.find_one({"filename": filename})
-                        if file_doc:
-                            cv_id = str(file_doc["_id"])
-                            download_link = f"/download_cv?cv_id={cv_id}"
-                        else:
-                            print(f"❌ CV not found in GridFS for: {filename}")  # Debugging log
-                            download_link = f"CV '{filename}' is in the database but could not be found in GridFS."
-                    else:
-                        print("❌ Missing filename for candidate")  # Debugging log
-                        download_link = "No Filename Available"
-                    
-                    matched_candidates.append({
-                        "filename": filename if filename else "Unknown Filename",
-                        "download_link": download_link,
-                        "matched_skills": list(matching_skills)  # ✅ Include matched skills in response
-                    })
-
-            print(f"✅ Sending matched candidates for Job ID {job_id}: {json.dumps(matched_candidates, indent=2)}")
-            self.set_header("Content-Type", "application/json")
-            self.write(json.dumps({"success": True, "matched_candidates": matched_candidates}, indent=4))
-
-        except Exception as e:
-            print("🔥 ERROR OCCURRED 🔥")
-            print("Error Message:", str(e))
-            print(traceback.format_exc())  # ✅ Print full traceback
-            self.set_status(500)
-            self.set_header("Content-Type", "application/json")
-            self.write(json.dumps({"success": False, "error": str(e)}))
 
 import json
 # Assuming BaseHandler is already defined in this file, remove the unnecessary import
@@ -741,9 +510,11 @@ class CheckTestStatusHandler(BaseHandler):
                 return
 
             existing_submission = await users_collection.find_one(query)
+            if existing_submission:
+                existing_submission["_id"] = str(existing_submission["_id"])
             print(f"✅ Test Found: {existing_submission}")
 
-            self.write({"taken": bool(existing_submission)})
+            self.write({"taken": bool(existing_submission),'data': existing_submission})
 
         except Exception as e:
             print(f"🚨 Error in CheckTestStatusHandler: {str(e)}")
@@ -815,6 +586,7 @@ import httpx  # async HTTP client for API calls
 class SubmitProgrammingTestHandler(BaseHandler):
     async def post(self):
         try:
+             # Debugging breakpoint
             data = json.loads(self.request.body)
             email = data.get("email")
             answers = data.get("answers")  # format: { answer_<qid>: "user predicted output" }
@@ -850,13 +622,16 @@ class SubmitProgrammingTestHandler(BaseHandler):
                 "percentage": round(percentage, 2),
                 "answers": answers
             }
+           
 
             await users_collection.update_one(
                 {"email": email},
                 {
                     "$set": {
                         "programming_results": result_data,
-                        "has_taken_programming": True
+                        "has_taken_programming": True,
+                        'Programming Test Percentage': round(percentage, 2),
+                        'Programming Test Score': correct
                     }
                 }
             )
@@ -905,10 +680,12 @@ class GetUserResultHandler(BaseHandler):
             user = convert_objectids(user)  # ✅ Convert ObjectIds to strings
             self.write({"success": True, "user": user})
 
-
+class DisqualifiedHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("disqualified.html")
 class ResultsPageHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("results.html")  # make sure this file is in your templates folder
+        self.render("result.html")  # make sure this file is in your templates folder
 
 
 import httpx
@@ -964,7 +741,8 @@ def make_app():
         (r"/adminhome", AdminHomePageHandler),
         (r"/aptitudetest", AptitudeTestHandler),
         (r"/programmingtest", ProgrammingTestHandler),
-        (r"/compile", CompileCodeHandler),
+        # (r"/compile", CompileCodeHandler),
+        (r"/disqualified.html", DisqualifiedHandler),
         (r"/api/get_programming_questions", GetProgrammingQuestionsHandler),
         (r"/submit_programming_test", SubmitProgrammingTestHandler),  # New endpoint for submitting programming test
         (r"/editprofile", EditProfileHandler),
@@ -979,20 +757,20 @@ def make_app():
         (r"/add_question", AddQuestionHandler),
         (r"/admintests", AddQuestionHandler),  # Serve the admin tests page directly
         (r"/delete_question", DeleteQuestionHandler),  # New endpoint for deleting questions
-        (r"/add_job_details", AddJobDetailsHandler),
-        (r'/job_requirements', JobRequirementsHandler),
+        # (r"/add_job_details", AddJobDetailsHandler),
+        # (r'/job_requirements', JobRequirementsHandler),
         (r"/get_questions", GetQuestionsHandler),
         (r"/fetch_sort_listed", FetchSortListedHandler),  # New endpoint for fetching questions
         (r"/save_score", SaveScoreHandler),
         # (r"/cvanalysis", CvHandler),
-        (r"/upload-preferred-cv", UploadCVHandler),
+        # (r"/upload-preferred-cv", UploadCVHandler),
         (r"/result", ResultsPageHandler),
-        (r"/preferredcv",PreferredcvHandler),
-        (r"/preferred_cv_data",PreferredCVDataHandler),
+        # (r"/preferredcv",PreferredcvHandler),
+        
         # (r"/download/?", DownloadCvHandler),  # ✅ New Route for Downloading CVs
         (r"/check_test_status", CheckTestStatusHandler),
-        (r"/download_cv/?", DownloadCVHandler),  # New endpoint for fetching questions
-        (r"/upload_preferred_cv", UploadPreferredCVPageHandler),
+        # (r"/download_cv/?", DownloadCVHandler),  # New endpoint for fetching questions
+        # (r"/upload_preferred_cv", UploadPreferredCVPageHandler),
           # Serve the HTML file
 
         (r"/(.*)", tornado.web.StaticFileHandler, {"path": "templates"}),  # Serve HTML files

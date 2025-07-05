@@ -59,6 +59,7 @@
       }
     </style>
     <script>
+      
       function loadResults() {
         // Retrieve test type, score, and percentage from localStorage
         let testType = localStorage.getItem("testType") || "unknown";
@@ -138,4 +139,19 @@
 
     <footer>&copy; 2025 Online Test System. All rights reserved.</footer>
   </body>
+<script>
+  window.onload = function () {
+    // Prevent going back
+    history.pushState(null, null, location.href);
+    window.addEventListener("popstate", function () {
+      history.pushState(null, null, location.href);
+      alert("Back navigation is disabled after submission.");
+    });
+
+    // Also load test results
+    loadResults();
+  };
+</script>
+
+
 </html>
