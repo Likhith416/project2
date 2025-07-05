@@ -1,0 +1,8 @@
+tornado
+pymongo
+dnspython
+bycrypt
+pydantic
+fastapi
+uvicorn
+python-multipart
