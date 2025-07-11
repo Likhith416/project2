@@ -130,7 +130,7 @@
     }
   </style>
 
-  <!-- 🔒 Anti-Cheat -->
+   <!-- 🔒 Anti-Cheat -->
   <script>
     document.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -156,9 +156,9 @@
 
 <body oncontextmenu="return false">
 
-
   <div class="container">
     <h2>Programming Prediction Test</h2>
+    <div id="timerDisplay" style="text-align:center; font-size:18px; margin-bottom:20px; color:#f4a940;"></div>
     <form id="programmingTestForm">
       <div id="questionContainer"></div>
       <button type="submit" class="btn mt-3">Submit Test</button>
@@ -177,8 +177,58 @@
       return null;
     }
 
-    let userAnswers = {};
+    let focusLostCount = 0;
+    let inactivitySeconds = 0;
+    let lastActivityTime = Date.now();
+    const startTime = Date.now();
 
+    // ⏱ Timer - 20 minutes
+    let duration = 20 * 60; // in seconds
+    const timerDisplay = document.getElementById("timerDisplay");
+
+    function updateTimer() {
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      timerDisplay.innerHTML = `⏳ Time Left: ${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+
+      if (duration <= 0) {
+        alert("⏰ Time's up! Submitting your test.");
+        document.getElementById("programmingTestForm").requestSubmit();
+      }
+      duration--;
+    }
+
+    setInterval(updateTimer, 1000);
+
+    // 🔍 Tab switch tracker
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        focusLostCount++;
+        alert(`Tab switching is not allowed! Attempt ${focusLostCount}`);
+        if (focusLostCount >= 2) {
+          alert("You have been disqualified from the programming test.");
+          window.location.href = "/disqualified.html";
+        }
+      }
+    });
+
+    // 💤 Inactivity tracker
+    setInterval(() => {
+      const now = Date.now();
+      const diff = (now - lastActivityTime) / 1000;
+      if (diff >= 10) {
+        inactivitySeconds += 10;
+        lastActivityTime = now;
+      }
+    }, 10000);
+
+    ["mousemove", "keydown", "click", "touchstart"].forEach(event =>
+      window.addEventListener(event, () => {
+        lastActivityTime = Date.now();
+      })
+    );
+
+    // 📥 Load Questions
     async function loadProgrammingQuestions() {
       const res = await fetch("/api/get_programming_questions");
       const data = await res.json();
@@ -203,6 +253,7 @@
       });
     }
 
+    // 🚀 Submit Logic
     async function submitTest(event) {
       event.preventDefault();
 
@@ -222,7 +273,20 @@
         return alert("❌ Please answer at least one question before submitting.");
       }
 
-      const payload = { email, answers };
+      const elapsed = Date.now() - startTime;
+      const minutes = Math.floor(elapsed / 60000);
+      const seconds = Math.floor((elapsed % 60000) / 1000);
+      const completedIn = `${minutes}m ${seconds}s`;
+
+      const payload = {
+        email,
+        answers,
+        behavior: {
+          focusLostCount,
+          inactivitySeconds,
+          completedIn
+        }
+      };
 
       const res = await fetch("/submit_programming_test", {
         method: "POST",
@@ -232,14 +296,6 @@
 
       const result = await res.json();
       if (!result.success) return alert("❌ Submission failed.");
-
-      const scorePayload = {
-        email,
-        score: result.score ?? 0,
-        percentage: result.percentage ?? 0,
-        type1: "Programming Test Score",
-        type2: "Programming Test Percentage",
-      };
 
       localStorage.setItem("testType", "programming");
       window.location.href = "/results";

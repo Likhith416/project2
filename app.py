@@ -404,29 +404,45 @@ class GetQuestionsHandler(BaseHandler):
 
 class SaveScoreHandler(BaseHandler):
     async def post(self):
-        data = json.loads(self.request.body)
-        email = data.get("email")
-        score_label = data.get("type1")
-        score = data.get("score")
-        percentage_label = data.get("type2")
-        percentage = data.get("percentage")
+        try:
+            data = json.loads(self.request.body)
+            email = data.get("email")
+            score_label = data.get("type1")
+            score = data.get("score")
+            percentage_label = data.get("type2")
+            percentage = data.get("percentage")
+            behavior = data.get("behavior", {})
 
-        update_data = {
-            "$set": {
-                score_label: score,
-                percentage_label: percentage,
+            update_data = {
+                "$set": {
+                    score_label: score,
+                    percentage_label: percentage,
+                }
             }
-        }
 
-        # Mark the test as completed
-        if score_label == "Aptitude Test Score":
-            update_data["$set"]["has_taken_aptitude"] = True
-        elif score_label == "Programming Test Score":
-            update_data["$set"]["has_taken_programming"] = True
+            # Add behavior metrics if present
+            if behavior:
+                update_data["$set"].update({
+                    "focusLostCount": behavior.get("focusLostCount", 0),
+                    "inactivitySeconds": behavior.get("inactivitySeconds", 0),
+                    "completedIn": behavior.get("completedIn", "N/A")
+                })
 
-        await users_collection.update_one({"email": email}, update_data)
+            # Mark the test as completed
+            if score_label == "Aptitude Test Score":
+                update_data["$set"]["has_taken_aptitude"] = True
+            elif score_label == "Programming Test Score":
+                update_data["$set"]["has_taken_programming"] = True
 
-        self.write({"success": True})
+            await users_collection.update_one({"email": email}, update_data)
+
+            self.write({"success": True})
+
+        except Exception as e:
+            print("❌ Error in SaveScoreHandler:", e)
+            self.set_status(500)
+            self.write({"success": False, "message": "Internal Server Error"})
+
 
 
 
@@ -586,10 +602,10 @@ import httpx  # async HTTP client for API calls
 class SubmitProgrammingTestHandler(BaseHandler):
     async def post(self):
         try:
-             # Debugging breakpoint
             data = json.loads(self.request.body)
             email = data.get("email")
-            answers = data.get("answers")  # format: { answer_<qid>: "user predicted output" }
+            answers = data.get("answers")  # { answer_<qid>: "predicted output" }
+            behavior = data.get("behavior", {})  # { focusLostCount, inactivitySeconds, completedIn }
 
             if not email or not answers:
                 self.set_status(400)
@@ -603,16 +619,13 @@ class SubmitProgrammingTestHandler(BaseHandler):
             async for q in cursor:
                 qid = str(q["_id"])
                 key = f"answer_{qid}"
-
                 if key not in answers:
                     continue
 
                 user_output = (answers[key] or "").strip()
                 expected_output = (q.get("expectedOutput") or "").strip()
-
                 if user_output == expected_output:
                     correct += 1
-
                 total += 1
 
             percentage = (correct / total) * 100 if total else 0
@@ -620,9 +633,13 @@ class SubmitProgrammingTestHandler(BaseHandler):
             result_data = {
                 "score": correct,
                 "percentage": round(percentage, 2),
-                "answers": answers
+                "answers": answers,
+                "behavior": {
+                    "focusLostCount": behavior.get("focusLostCount", 0),
+                    "inactivitySeconds": behavior.get("inactivitySeconds", 0),
+                    "completedIn": behavior.get("completedIn", "N/A")
+                }
             }
-           
 
             await users_collection.update_one(
                 {"email": email},
@@ -630,8 +647,8 @@ class SubmitProgrammingTestHandler(BaseHandler):
                     "$set": {
                         "programming_results": result_data,
                         "has_taken_programming": True,
-                        'Programming Test Percentage': round(percentage, 2),
-                        'Programming Test Score': correct
+                        "Programming Test Score": correct,
+                        "Programming Test Percentage": round(percentage, 2)
                     }
                 }
             )
@@ -686,51 +703,6 @@ class DisqualifiedHandler(tornado.web.RequestHandler):
 class ResultsPageHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("result.html")  # make sure this file is in your templates folder
-
-
-import httpx
-
-import json
-import httpx
-from tornado.web import RequestHandler
-
-class CompileCodeHandler(RequestHandler):
-    async def post(self):
-        try:
-            data = json.loads(self.request.body)
-            language_id = data.get("language_id")
-            source_code = data.get("source_code")
-            stdin = data.get("stdin", "")
-
-            headers = {
-                "Content-Type": "application/json",
-                "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
-                "X-RapidAPI-Key": "c5bd27b786mshdab4e3cbcc47599p184595jsnd2f432513ab7"
-            }
-
-            payload = {
-                "language_id": language_id,
-                "source_code": source_code,
-                "stdin": stdin
-            }
-
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    "https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true",
-                    json=payload,
-                    headers=headers
-                )
-
-                result = await response.json()  # ✅ Awaited correctly
-                self.write(result)
-
-        except Exception as e:
-            print("❌ Compile error:", e)
-            self.set_status(500)
-            self.write({"error": str(e)})
-
-
-
 
 
 def make_app():
