@@ -10,110 +10,147 @@
       rel="stylesheet"
     />
 
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
 
-      body {
-        font-family: "Inter", sans-serif;
-        margin: 0;
-        padding: 0;
-        background: linear-gradient(to right, #0f0f0f, #1a1a1a);
-        color: #f4f4f4;
-      }
+  body {
+    font-family: "Inter", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+    color: #f4f4f4;
+  }
 
-      .navbar {
-        background-color: #121212;
-        padding: 12px 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #2a2a2a;
-      }
+  .navbar {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+  }
 
-      .navbar a {
-        color: #f4a940;
-        text-decoration: none;
-        padding: 10px 16px;
-        font-weight: 500;
-        transition: background-color 0.3s, color 0.3s;
-      }
+  .navbar a {
+    color: #f4a940;
+    text-decoration: none;
+    padding: 10px 16px;
+    font-weight: 600;
+    transition: color 0.3s;
+  }
 
-      .navbar a:hover {
-        color: white;
-      }
+  .navbar a:hover {
+    color: white;
+  }
 
-      .dropdown,
-      .user-dropdown {
-        position: relative;
-      }
+  .dropdown,
+  .user-dropdown {
+    position: relative;
+  }
 
-      .dropdown-menu,
-      .user-dropdown-menu {
-        display: none;
-        position: absolute;
-        background-color: #1e1e1e;
-        border: 1px solid #2a2a2a;
-        border-radius: 10px;
-        top: 100%;
-        right: 0;
-        min-width: 180px;
-        z-index: 1000;
-      }
+  .dropdown-menu,
+  .user-dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: rgba(18, 18, 18, 0.95);
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    top: 100%;
+    right: 0;
+    min-width: 180px;
+    z-index: 1000;
+  }
 
-      .dropdown:hover .dropdown-menu,
-      .user-dropdown:hover .user-dropdown-menu {
-        display: block;
-      }
+  .dropdown:hover .dropdown-menu,
+  .user-dropdown:hover .user-dropdown-menu {
+    display: block;
+  }
 
-      .dropdown-menu a,
-      .user-dropdown-menu a {
-        color: #ddd;
-        padding: 10px 16px;
-        display: block;
-        text-decoration: none;
-      }
+  .dropdown-menu a,
+  .user-dropdown-menu a {
+    color: #ddd;
+    padding: 10px 16px;
+    display: block;
+    text-decoration: none;
+    transition: 0.2s ease-in-out;
+  }
 
-      .dropdown-menu a:hover,
-      .user-dropdown-menu a:hover {
-        background-color: #2a2a2a;
-      }
+  .dropdown-menu a:hover,
+  .user-dropdown-menu a:hover {
+    background-color: #2a2a2a;
+  }
 
-      .disabled-link {
-        pointer-events: none;
-        opacity: 0.5;
-        color: gray;
-      }
+  .disabled-link {
+    pointer-events: none;
+    opacity: 0.5;
+    color: gray;
+  }
 
-      .container {
-        max-width: 850px;
-        margin: 40px auto;
-        background-color: #1b1b1b;
-        border: 1px solid #2a2a2a;
-        border-radius: 16px;
-        padding: 40px 30px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-      }
+  .container {
+    max-width: 850px;
+    margin: 50px auto;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
 
-      h1,
-      h3 {
-        color: #f4a940;
-      }
+  h1,
+  h3 {
+    color: #f4a940;
+    font-weight: 600;
+  }
 
-      .user-info p {
-        margin: 10px 0;
-        font-size: 16px;
-        color: #ccc;
-      }
+  p {
+    font-size: 16px;
+    color: #ccc;
+  }
 
-      .user-info strong {
-        color: #fff;
-      }
-    </style>
+  .user-info strong {
+    color: #fff;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .text-start {
+    text-align: left;
+  }
+
+  @media (max-width: 768px) {
+    .navbar {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px 20px;
+    }
+
+    .container {
+      margin: 20px 10px;
+      padding: 30px 20px;
+    }
+  }
+  .navbar img {
+  transition: transform 0.3s ease;
+}
+.navbar img:hover {
+  transform: rotate(-5deg) scale(1.05);
+}
+
+</style>
+
   </head>
   <body>
     <div class="navbar">
-      <a href="/userhome">🏠 Home</a>
-
+    
+       <a href="/userhome" style="display: flex; align-items: center;">
+    <img src="/static/logo.png" alt="Logo" style="height: 40px; margin-right: 10px;" />
+    <span style="color: #f4a940; font-weight: 700; font-size: 18px;">Study Syndicate</span>
+  </a>
       <div class="dropdown">
         <a href="#">🧪 Tests ▼</a>
         <div class="dropdown-menu">
