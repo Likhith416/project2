@@ -15,10 +15,31 @@ from email.message import EmailMessage
 import os
 
 # MongoDB Connection
-MONGO_URI = "mongodb+srv://likhth1234:nani0416@cluster04.uyhboig.mongodb.net/"
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
+from dotenv import load_dotenv
+import os
+
+# Load .env file
+load_dotenv()
+
+# Access MongoDB URI safely
+import os
+from dotenv import load_dotenv
+import motor.motor_asyncio
+
+# Load environment variables from .env
+load_dotenv()
+
+# Get the MongoDB URI safely
+mongo_uri = os.getenv("MONGO_URI")
+print("Mongo URI loaded safely:", mongo_uri)
+
+# Use the correct variable name
+client = motor.motor_asyncio.AsyncIOMotorClient(mongo_uri)
 db = client["testdb"]
 users_collection = db["users"]
+
+print("Connected to MongoDB asynchronously!")
+
 
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 fs = AsyncIOMotorGridFSBucket(db)
